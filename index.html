@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spine Player</title>
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+
+<body>
+  <div id="app"></div>
+  <div class="grid-overlay"></div>
+
+  <button id="menuBtn" class="menu-btn">☰</button>
+
+  <div id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <h3>Settings</h3>
+      <button id="closeSidebarBtn">✕</button>
+    </div>
+
+    <div class="sidebar-content">
+      <div class="control-group">
+        <div class="control-label">
+          <span>Scale</span>
+          <span id="scaleVal">1.00x</span>
+        </div>
+        <input type="range" id="scaleSlider" min="0.1" max="2" step="0.05" value="1">
+      </div>
+
+      <div class="control-group">
+        <div class="control-label">
+          <span>Speed</span>
+          <span id="speedVal">1.00x</span>
+        </div>
+        <input type="range" id="speedSlider" min="0" max="3" step="0.05" value="1">
+      </div>
+
+      <div class="control-group toggle-group">
+        <span>Show Grid</span>
+        <label class="switch">
+          <input type="checkbox" id="gridToggle">
+          <span class="slider-switch"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="player-ui">
+    <div id="drop-zone">
+      <span>Drag & Drop Spine files here</span>
+      <span style="font-size: 10px; color: rgba(255, 255, 255, 0.45); font-weight: normal;">or click to select (.json, .atlas, .png, .webp)</span>
+      <input type="file" id="fileInput" multiple accept=".json,.atlas,.png,.webp" style="display: none;">
+    </div>
+    <div class="timeline">
+      <div class="timeline-fill"></div>
+      <div class="timeline-handle"></div>
+    </div>
+
+    <div class="controls">
+      <button id="playPauseBtn">⏸</button>
+
+      <div class="right-controls">
+        <select id="animationSelect"></select>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
