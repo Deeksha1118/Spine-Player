@@ -9,7 +9,7 @@ export async function createPixiApp() {
         antialias: true,
     });
 
-    document.body.appendChild(app.canvas);
+    // document.body.appendChild(app.canvas);
 
     return app;
 }
