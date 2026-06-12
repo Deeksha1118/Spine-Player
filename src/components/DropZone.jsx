@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { setupDragDropLoader } from "../core/dragDropLoader";
+import { setupDragDropLoader } from "../pixi-scripts/core/dragDropLoader";
 
 export default function DropZone({ player, onLoaded }) {
     useEffect(() => {

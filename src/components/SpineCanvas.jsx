@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
-import { createPixiApp } from "../core/app";
-import { loadSpineAssets } from "../core/spineLoader";
-import { SpinePlayer } from "../player/SpinePlayer";
+import { createPixiApp } from "../pixi-scripts/core/app";
+import { loadSpineAssets } from "../pixi-scripts/core/spineLoader";
+import { SpinePlayer } from "../pixi-scripts/player/SpinePlayer";
 
 export default function SpineCanvas({onPlayerReady}) {
     const canvasRef = useRef();
