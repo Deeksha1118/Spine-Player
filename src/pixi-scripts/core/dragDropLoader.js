@@ -146,7 +146,7 @@ export function setupDragDropLoader(player, onLoaded) {
             const animations = player.getAnimations();
             const defaultAnim = animations.includes("idle") ? "idle" : animations[0];
             player.playAnimation(defaultAnim, player.looping);
-            player.enableDragging();
+            // player.enableDragging();
 
             dropZone.innerHTML = originalText;
 
@@ -168,7 +168,7 @@ export function setupDragDropLoader(player, onLoaded) {
     }
 }
 
-function showToast(title, message, type = "info") {
+export function showToast(title, message, type = "info") {
     let container = document.querySelector(".toast-container");
     if (!container) {
         container = document.createElement("div");
