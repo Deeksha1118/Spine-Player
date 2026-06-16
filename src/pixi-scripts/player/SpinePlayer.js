@@ -9,6 +9,8 @@ export class SpinePlayer {
         this.currentAnimation = null;
         this.speed = 1.0;
         this.scale = 1.0;
+        this.paused = false;
+        this.looping = false;
     }
 
     async init() {
@@ -23,12 +25,12 @@ export class SpinePlayer {
 
         this.app.stage.addChild(this.spine);
 
-        this.playAnimation("idle", true);
+        this.playAnimation("idle", this.looping);
 
-        this.enableDragging();
+        // this.enableDragging();
     }
 
-    playAnimation(animationName, loop = true) {
+    playAnimation(animationName, loop = this.looping) {
         if (!this.spine) return;
 
         this.currentAnimation = animationName;
@@ -37,11 +39,13 @@ export class SpinePlayer {
 
     pause() {
         if (!this.spine) return;
+        this.paused = true;
         this.spine.state.timeScale = 0;
     }
 
     resume() {
         if (!this.spine) return;
+        this.paused = false;
         this.spine.state.timeScale = this.speed;
     }
 
@@ -54,8 +58,35 @@ export class SpinePlayer {
 
     setSpeed(val) {
         this.speed = val;
-        if (this.spine && this.spine.state.timeScale !== 0) {
+        if (this.spine && !this.paused) {
             this.spine.state.timeScale = val;
+        }
+    }
+
+    setLooping(val) {
+        this.looping = val;
+        if (this.spine) {
+            const track = this.spine.state.getCurrent(0);
+            if (track) {
+                track.loop = val;
+            }
+        }
+    }
+
+    reset() {
+        this.scale = 1.0;
+        this.paused = false;
+        this.speed = 1.0;
+        this.looping = false;
+        if (this.spine) {
+            this.spine.scale.set(1.0);
+            this.spine.x = this.app.screen.width / 2;
+            this.spine.y = this.app.screen.height / 2;
+            this.spine.state.timeScale = 1.0;
+            const track = this.spine.state.getCurrent(0);
+            if (track) {
+                track.loop = false;
+            }
         }
     }
 

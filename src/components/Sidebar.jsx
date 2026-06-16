@@ -8,7 +8,9 @@ export default function Sidebar({
     gridActive,
     onGridToggle,
     theme,
-    onThemeToggle
+    onThemeToggle,
+    looping,
+    onLoopToggle
 }) {
     return (
         <div className={`sidebar ${isOpen ? "open" : ""}`}>
@@ -55,6 +57,18 @@ export default function Sidebar({
                             type="checkbox"
                             checked={gridActive}
                             onChange={(e) => onGridToggle(e.target.checked)}
+                        />
+                        <span className="slider-switch" />
+                    </label>
+                </div>
+
+                <div className="control-group toggle-group">
+                    <span>Loop Animation</span>
+                    <label className="switch">
+                        <input
+                            type="checkbox"
+                            checked={looping}
+                            onChange={(e) => onLoopToggle(e.target.checked)}
                         />
                         <span className="slider-switch" />
                     </label>

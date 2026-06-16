@@ -13,6 +13,7 @@ export default function App() {
     const [speed, setSpeed] = useState(1.0);
     const [gridActive, setGridActive] = useState(false);
     const [theme, setTheme] = useState("dark");
+    const [looping, setLooping] = useState(false);
 
     useEffect(() => {
         if (theme === "light") {
@@ -45,7 +46,8 @@ export default function App() {
             if (
                 e.target.closest(".player-ui") ||
                 e.target.closest(".sidebar") ||
-                e.target.closest(".menu-btn")
+                e.target.closest(".menu-btn") ||
+                e.target.closest(".zoom-controls")
             ) {
                 return;
             }
@@ -58,7 +60,8 @@ export default function App() {
             if (
                 e.target.closest(".player-ui") ||
                 e.target.closest(".sidebar") ||
-                e.target.closest(".menu-btn")
+                e.target.closest(".menu-btn") ||
+                e.target.closest(".zoom-controls")
             ) {
                 return;
             }
@@ -94,18 +97,52 @@ export default function App() {
         };
     }, [player, sidebarOpen]);
 
+    useEffect(() => {
+        if (!player) return;
+
+        const handleWheel = (e) => {
+            if (
+                e.target.closest(".player-ui") ||
+                e.target.closest(".sidebar") ||
+                e.target.closest(".menu-btn") ||
+                e.target.closest(".zoom-controls")
+            ) {
+                return;
+            }
+
+            e.preventDefault();
+
+            const zoomIntensity = 0.05;
+            const delta = -e.deltaY;
+            const factor = delta > 0 ? (1 + zoomIntensity) : (1 - zoomIntensity);
+
+            const currentScale = player.scale;
+            const newScale = Math.min(Math.max(0.1, currentScale * factor), 3.0);
+            
+            player.setScale(newScale);
+            setScale(newScale);
+        };
+
+        window.addEventListener("wheel", handleWheel, { passive: false });
+
+        return () => {
+            window.removeEventListener("wheel", handleWheel);
+        };
+    }, [player]);
+
     const handlePlayerReady = (readyPlayer) => {
         setPlayer(readyPlayer);
         setAnimations(readyPlayer.getAnimations());
         setCurrentAnimation(readyPlayer.currentAnimation || "idle");
         setScale(readyPlayer.scale);
         setSpeed(readyPlayer.speed);
+        setLooping(readyPlayer.looping);
     };
 
     const handleAnimChange = (anim) => {
         setCurrentAnimation(anim);
         if (player) {
-            player.playAnimation(anim, true);
+            player.playAnimation(anim, looping);
             if (paused) {
                 player.resume();
                 setPaused(false);
@@ -120,6 +157,12 @@ export default function App() {
         setPaused(false);
         setScale(1.0);
         setSpeed(1.0);
+        setLooping(false);
+
+        player.paused = false;
+        player.speed = 1.0;
+        player.scale = 1.0;
+        player.looping = false;
     };
 
     const handleScaleChange = (newScale) => {
@@ -133,6 +176,23 @@ export default function App() {
         setSpeed(newSpeed);
         if (player) {
             player.setSpeed(newSpeed);
+        }
+    };
+
+    const handleLoopToggle = (newLooping) => {
+        setLooping(newLooping);
+        if (player) {
+            player.setLooping(newLooping);
+        }
+    };
+
+    const handleReset = () => {
+        if (player) {
+            player.reset();
+            setScale(1.0);
+            setSpeed(1.0);
+            setPaused(false);
+            setLooping(false);
         }
     };
 
@@ -151,8 +211,15 @@ export default function App() {
                 onGridToggle={setGridActive}
                 theme={theme}
                 onThemeToggle={setTheme}
+                looping={looping}
+                onLoopToggle={handleLoopToggle}
             />
             <SpineCanvas onPlayerReady={handlePlayerReady} />
+            {player && (
+                <div className="zoom-controls">
+                    <button title="Reset Zoom & Position" onClick={handleReset}>⟲</button>
+                </div>
+            )}
             {player && (
                 <Controls
                     player={player}
