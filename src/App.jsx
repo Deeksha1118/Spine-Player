@@ -16,6 +16,7 @@ export default function App() {
     const [theme, setTheme] = useState("dark");
     const [looping, setLooping] = useState(false);
     const [exporting, setExporting] = useState(false);
+    const [dragEnabled, setDragEnabled] = useState(false);
 
     useEffect(() => {
         if (theme === "light") {
@@ -136,6 +137,14 @@ export default function App() {
         setScale(readyPlayer.scale);
         setSpeed(readyPlayer.speed);
         setLooping(readyPlayer.looping);
+        readyPlayer.setDragEnabled(dragEnabled);
+    };
+
+    const handleDragToggle = (enabled) => {
+        setDragEnabled(enabled);
+        if (player) {
+            player.setDragEnabled(enabled);
+        }
     };
 
     const handleAnimChange = (anim) => {
@@ -162,6 +171,7 @@ export default function App() {
         player.speed = 1.0;
         player.scale = 1.0;
         player.looping = false;
+        player.setDragEnabled(dragEnabled);
     };
 
     const handleScaleChange = (newScale) => {
@@ -294,6 +304,8 @@ export default function App() {
                 onThemeToggle={setTheme}
                 looping={looping}
                 onLoopToggle={handleLoopToggle}
+                dragEnabled={dragEnabled}
+                onDragToggle={handleDragToggle}
             />
             <SpineCanvas onPlayerReady={handlePlayerReady} />
             {player && (

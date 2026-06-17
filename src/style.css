@@ -122,7 +122,11 @@ select {
     height: 100%;
     pointer-events: none;
     z-index: 5;
-    background-size: 50px 50px;
+    --grid-offset-x: 0px;
+    --grid-offset-y: 0px;
+    --grid-scale: 1;
+    background-size: calc(50px * var(--grid-scale, 1)) calc(50px * var(--grid-scale, 1));
+    background-position: calc(50% + var(--grid-offset-x, 0px)) calc(50% + var(--grid-offset-y, 0px));
     background-image:
         linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
         linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
@@ -142,6 +146,7 @@ select {
     left: 0;
     width: 100%;
     height: 1px;
+    transform: translateY(var(--grid-offset-y, 0px));
 }
 
 .grid-overlay::after {
@@ -149,6 +154,7 @@ select {
     top: 0;
     width: 1px;
     height: 100%;
+    transform: translateX(var(--grid-offset-x, 0px));
 }
 
 body.grid-active .grid-overlay {
@@ -164,6 +170,51 @@ body.light-theme .grid-overlay {
 body.light-theme .grid-overlay::before,
 body.light-theme .grid-overlay::after {
     background: rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-select {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f5f5f5;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 8px 32px 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    height: 36px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f0f0f0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    width: 100%;
+}
+
+.sidebar-select:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.sidebar-select:focus {
+    outline: none;
+    border-color: #4da3ff;
+}
+
+/* Light theme overrides */
+body.light-theme .sidebar-select {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: #333333;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+}
+
+body.light-theme .sidebar-select:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+    border-color: rgba(0, 0, 0, 0.25);
 }
 
 

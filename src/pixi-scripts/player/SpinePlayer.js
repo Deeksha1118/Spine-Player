@@ -11,6 +11,7 @@ export class SpinePlayer {
         this.scale = 1.0;
         this.paused = false;
         this.looping = false;
+        this.dragEnabled = false;
     }
 
     async init() {
@@ -27,7 +28,7 @@ export class SpinePlayer {
 
         this.playAnimation("idle", this.looping);
 
-        // this.enableDragging();
+        this.enableDragging();
     }
 
     playAnimation(animationName, loop = this.looping) {
@@ -54,6 +55,7 @@ export class SpinePlayer {
         if (this.spine) {
             this.spine.scale.set(val);
         }
+        this.updateGridOffset();
     }
 
     setSpeed(val) {
@@ -88,6 +90,7 @@ export class SpinePlayer {
                 track.loop = false;
             }
         }
+        this.updateGridOffset();
     }
 
     getAnimations() {
@@ -95,34 +98,80 @@ export class SpinePlayer {
     }
 
     enableDragging() {
-        this.spine.eventMode = "static";
-        this.spine.cursor = "pointer";
-
-        let dragging = false;
-
+        let draggingSpine = false;
         let offsetX = 0;
         let offsetY = 0;
 
+        // Clean up previous listeners if enableDragging is called multiple times
+        this.spine.removeAllListeners("pointerdown");
+        this.spine.removeAllListeners("pointerup");
+        this.spine.removeAllListeners("pointerupoutside");
+        this.spine.removeAllListeners("pointermove");
+
+        // Spine Drag Events
         this.spine.on("pointerdown", (e) => {
-            dragging = true;
+            if (!this.dragEnabled) return;
+            draggingSpine = true;
+            this.spine.cursor = 'grabbing';
             const position = e.data.global;
             offsetX = position.x - this.spine.x;
             offsetY = position.y - this.spine.y;
         });
 
-        this.spine.on("pointerup", () => {
-            dragging = false;
-        });
+        const handleSpineUp = () => {
+            if (draggingSpine) {
+                draggingSpine = false;
+                if (this.dragEnabled) {
+                    this.spine.cursor = 'grab';
+                }
+            }
+        };
 
-        this.spine.on("pointerupoutside", () => {
-            dragging = false;
-        });
+        this.spine.on("pointerup", handleSpineUp);
+        this.spine.on("pointerupoutside", handleSpineUp);
 
-        this.spine.on("pointermove", (e) => {
-            if (!dragging) return;
+        // Move Event Handler
+        const handleMove = (e) => {
+            if (!this.dragEnabled || !draggingSpine) return;
+
             const position = e.data.global;
             this.spine.x = position.x - offsetX;
             this.spine.y = position.y - offsetY;
-        });
+            this.updateGridOffset();
+        };
+
+        this.spine.on("pointermove", handleMove);
+
+        this.updateDragSettings();
+        this.updateGridOffset();
+    }
+
+    setDragEnabled(enabled) {
+        this.dragEnabled = enabled;
+        this.updateDragSettings();
+    }
+
+    updateDragSettings() {
+        if (!this.spine) return;
+
+        if (this.dragEnabled) {
+            this.spine.eventMode = 'static';
+            this.spine.cursor = 'grab';
+        } else {
+            this.spine.eventMode = 'none';
+            this.spine.cursor = 'default';
+        }
+    }
+
+    updateGridOffset() {
+        if (!this.spine) return;
+        const gridOverlay = document.querySelector(".grid-overlay");
+        if (gridOverlay) {
+            const offsetX = this.spine.x - this.app.screen.width / 2;
+            const offsetY = this.spine.y - this.app.screen.height / 2;
+            gridOverlay.style.setProperty("--grid-offset-x", `${offsetX}px`);
+            gridOverlay.style.setProperty("--grid-offset-y", `${offsetY}px`);
+            gridOverlay.style.setProperty("--grid-scale", `${this.scale}`);
+        }
     }
 }

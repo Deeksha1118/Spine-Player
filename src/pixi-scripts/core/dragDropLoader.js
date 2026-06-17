@@ -146,7 +146,7 @@ export function setupDragDropLoader(player, onLoaded) {
             const animations = player.getAnimations();
             const defaultAnim = animations.includes("idle") ? "idle" : animations[0];
             player.playAnimation(defaultAnim, player.looping);
-            // player.enableDragging();
+            player.enableDragging();
 
             dropZone.innerHTML = originalText;
 

@@ -29,8 +29,11 @@ export default function SpineCanvas({onPlayerReady}) {
             }
 
             window.addEventListener("resize", () => {
-                player.spine.x = app.screen.width / 2;
-                player.spine.y = app.screen.height / 2;
+                if (player && player.spine) {
+                    player.spine.x = app.screen.width / 2;
+                    player.spine.y = app.screen.height / 2;
+                    player.updateGridOffset();
+                }
             });
         }
 

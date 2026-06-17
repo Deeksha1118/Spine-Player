@@ -10,7 +10,9 @@ export default function Sidebar({
     theme,
     onThemeToggle,
     looping,
-    onLoopToggle
+    onLoopToggle,
+    dragEnabled,
+    onDragToggle
 }) {
     return (
         <div className={`sidebar ${isOpen ? "open" : ""}`}>
@@ -48,6 +50,18 @@ export default function Sidebar({
                         value={speed}
                         onChange={(e) => onSpeedChange(parseFloat(e.target.value))}
                     />
+                </div>
+
+                <div className="control-group toggle-group">
+                    <span>Enable Dragging</span>
+                    <label className="switch">
+                        <input
+                            type="checkbox"
+                            checked={dragEnabled}
+                            onChange={(e) => onDragToggle(e.target.checked)}
+                        />
+                        <span className="slider-switch" />
+                    </label>
                 </div>
 
                 <div className="control-group toggle-group">
