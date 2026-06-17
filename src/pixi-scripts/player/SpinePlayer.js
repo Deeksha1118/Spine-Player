@@ -102,13 +102,11 @@ export class SpinePlayer {
         let offsetX = 0;
         let offsetY = 0;
 
-        // Clean up previous listeners if enableDragging is called multiple times
         this.spine.removeAllListeners("pointerdown");
         this.spine.removeAllListeners("pointerup");
         this.spine.removeAllListeners("pointerupoutside");
         this.spine.removeAllListeners("pointermove");
 
-        // Spine Drag Events
         this.spine.on("pointerdown", (e) => {
             if (!this.dragEnabled) return;
             draggingSpine = true;
@@ -130,7 +128,6 @@ export class SpinePlayer {
         this.spine.on("pointerup", handleSpineUp);
         this.spine.on("pointerupoutside", handleSpineUp);
 
-        // Move Event Handler
         const handleMove = (e) => {
             if (!this.dragEnabled || !draggingSpine) return;
 

@@ -211,80 +211,195 @@ export default function App() {
         const track = player.spine?.state?.getCurrent(0);
         if (!track) return;
 
+        console.log("Animation Duration:", track.animation.duration);
+
         setExporting(true);
 
         const expectedColor = theme === "light" ? "#f5f5f5" : "#1e1e1e";
         const originalPaused = paused;
         const originalTrackTime = track.trackTime;
+        const originalLooping = looping;
+        const originalSpeed = speed;
+        const originalScale = scale;
+        const originalAnimation = currentAnimation;
 
-        // 1. Prepare for recording: Set background to black
         player.app.renderer.background.color = "#000000";
 
-        // Restart animation
-        track.trackTime = 0;
-        
-        // If paused, temporarily resume
-        if (originalPaused) {
-            player.resume();
-        }
-
-        // 2. Set up MediaRecorder
+        // Set up MediaRecorder & canvas stream
         const canvas = player.app.canvas;
-        const stream = canvas.captureStream(30); // 30 FPS
-        
-        let extension = "mp4";
-        let mimeType = 'video/mp4';
-        
+        const stream = canvas.captureStream(60);
+        const streamTracks = stream.getTracks();
+
+        let mimeType = "video/webm;codecs=vp9";
+        let extension = "webm";
+
         if (!MediaRecorder.isTypeSupported(mimeType)) {
-            mimeType = 'video/webm';
-            extension = "webm";
+            mimeType = "video/webm;codecs=vp8";
+        }
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = "video/webm";
+        }
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+            if (MediaRecorder.isTypeSupported("video/mp4")) {
+                mimeType = "video/mp4";
+                extension = "mp4";
+            } else {
+                mimeType = "";
+            }
         }
 
         const chunks = [];
-        const mediaRecorder = new MediaRecorder(stream, { mimeType });
+        let mediaRecorder = null;
+        let completionListener = null;
 
-        mediaRecorder.ondataavailable = (e) => {
-            if (e.data && e.data.size > 0) {
-                chunks.push(e.data);
-            }
+        let frameCount = 0;
+        const tick = () => {
+            frameCount++;
         };
 
-        mediaRecorder.onstop = () => {
-            // Restore original player states
-            player.app.renderer.background.color = expectedColor;
-            if (originalPaused) {
-                player.pause();
-            } else {
-                track.trackTime = originalTrackTime;
+        const cleanup = () => {
+            if (completionListener && player?.spine?.state) {
+                try {
+                    player.spine.state.removeListener(completionListener);
+                } catch (e) {
+                    console.error("Error removing completion listener:", e);
+                }
             }
 
-            // Create download link
-            const blob = new Blob(chunks, { type: mimeType });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `${currentAnimation || "animation"}.${extension}`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
+            if (player?.app?.ticker) {
+                try {
+                    player.app.ticker.remove(tick);
+                } catch (e) {
+                    console.error("Error removing ticker listener:", e);
+                }
+            }
+
+            console.log("Frames Rendered:", frameCount);
+
+            if (streamTracks) {
+                streamTracks.forEach((t) => {
+                    try {
+                        t.stop();
+                    } catch (e) {
+                        console.error("Error stopping stream track:", e);
+                    }
+                });
+            }
+
+            if (player?.app?.renderer?.background) {
+                player.app.renderer.background.color = expectedColor;
+            }
+
+            if (player?.spine?.state) {
+                try {
+                    player.playAnimation(originalAnimation, originalLooping);
+                    
+                    const restoredTrack = player.spine.state.getCurrent(0);
+                    if (restoredTrack) {
+                        restoredTrack.trackTime = originalTrackTime;
+                    }
+
+                    player.setSpeed(originalSpeed);
+                    player.setScale(originalScale);
+
+                    if (originalPaused) {
+                        player.pause();
+                    } else {
+                        player.resume();
+                    }
+                } catch (e) {
+                    console.error("Error restoring player state:", e);
+                }
+            }
+
             setExporting(false);
-            showToast("Export Complete", `Animation downloaded as ${extension.toUpperCase()}!`, "success");
         };
 
-        // Start recording
-        mediaRecorder.start();
-        showToast("Exporting", "Recording and preparing video file...", "info");
+        let startTime = 0;
+        let completeTime = 0;
+        let stopTime = 0;
+        let onstopTime = 0;
 
-        // Calculate recording duration
-        const duration = track.animation.duration;
-        const speedVal = player.speed || 1.0;
-        const durationMs = (duration / speedVal) * 1000;
+        try {
+            const options = mimeType ? { mimeType } : undefined;
+            mediaRecorder = new MediaRecorder(stream, options);
 
-        setTimeout(() => {
-            mediaRecorder.stop();
-        }, durationMs);
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data && e.data.size > 0) {
+                    chunks.push(e.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                onstopTime = performance.now();
+                console.log("[Export Debug] mediaRecorder.onstop timestamp:", onstopTime);
+                console.log("[Export Debug] Total recording elapsed time:", (onstopTime - startTime).toFixed(2) + "ms");
+                
+                try {
+                    const blob = new Blob(chunks, { type: mimeType || "video/webm" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `${originalAnimation || "animation"}.${extension}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    showToast("Export Complete", `Animation downloaded as ${extension.toUpperCase()}!`, "success");
+                } catch (err) {
+                    console.error("Error generating download:", err);
+                    showToast("Export Failed", "Could not generate download file.", "error");
+                } finally {
+                    cleanup();
+                }
+            };
+
+            mediaRecorder.start();
+            startTime = performance.now();
+            console.log("[Export Debug] mediaRecorder.start() timestamp:", startTime);
+            showToast("Exporting", "Recording and preparing video file...", "info");
+
+            if (player?.app?.ticker) {
+                console.log("Ticker FPS:", player.app.ticker.FPS);
+                player.app.ticker.add(tick);
+            }
+
+            const exportEntry = player.spine.state.setAnimation(0, currentAnimation, false);
+            console.log("[Export Debug] exportEntry.animation.duration:", exportEntry.animation.duration);
+            
+            const speedVal = player.speed > 0 ? player.speed : 1.0;
+            player.spine.state.timeScale = speedVal;
+
+            if (originalPaused) {
+                player.resume();
+                player.spine.state.timeScale = speedVal;
+            }
+
+            completionListener = {
+                complete: (entry) => {
+                    if (entry !== exportEntry) return;
+
+                    completeTime = performance.now();
+                    console.log("[Export Debug] animation complete timestamp:", completeTime);
+                    console.log("[Export Debug] Animation duration in JS context:", (completeTime - startTime).toFixed(2) + "ms");
+
+                    setTimeout(() => {
+                        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                            stopTime = performance.now();
+                            console.log("[Export Debug] mediaRecorder.stop() timestamp:", stopTime);
+                            mediaRecorder.stop();
+                        }
+                    }, 200);
+                }
+            };
+            player.spine.state.addListener(completionListener);
+
+        } catch (error) {
+            console.error("Export execution failed:", error);
+            showToast("Export Failed", "Failed during video export setup.", "error");
+            cleanup();
+        }
     };
 
     return (
